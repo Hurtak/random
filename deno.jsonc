@@ -7,15 +7,18 @@
   },
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@^1.0.0",
+    "@react-three/drei": "npm:@react-three/drei@^10.0.6",
+    "@react-three/fiber": "npm:@react-three/fiber@^9.1.2",
     "@std/assert": "jsr:@std/assert@1",
     "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.1.4",
-    "@types/react": "npm:@types/react@^18.3.12",
+    "@types/react": "npm:@types/react@^19.1.2",
     "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.3.3",
-    "react": "npm:react@^18.3.1",
-    "react-dom": "npm:react-dom@^18.3.1",
-    "react-router-dom": "npm:react-router-dom@^6.28.0",
+    "react": "npm:react@^19.1.0",
+    "react-dom": "npm:react-dom@^19.1.0",
+    "react-router-dom": "npm:react-router-dom@^7.5.0",
     "tailwindcss": "npm:tailwindcss@^4.1.4",
-    "vite": "npm:vite@^5.4.11"
+    "three": "npm:three@^0.175.0",
+    "vite": "npm:vite@^6.3.0"
   },
   "compilerOptions": {
     "types": ["react", "react-dom", "@types/react"],
