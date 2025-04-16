@@ -1,5 +1,11 @@
 on:
-  - push
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   check-and-build:
