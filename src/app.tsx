@@ -100,17 +100,23 @@ const Coin = () => {
       <mesh
         ref={coinRef}
         onClick={handleClick}
-        rotation={[Math.PI / 2, 0, 0]} // Start with flat side facing camera
+        rotation={[-Math.PI / 2, 0, 0]} // Start with flat side facing camera
         position={[0, 0, 0]}
       >
         {/* Coin body */}
         <cylinderGeometry args={[coinSize, coinSize, coinThickness, 64]} />
-        <meshStandardMaterial color="#FFD700" metalness={1} roughness={0.2} />
+        <meshStandardMaterial
+          color="#FFD700"
+          metalness={0.85}
+          roughness={0.2}
+          emissive="#FFC107"
+          emissiveIntensity={0.2}
+        />
 
         {/* Heads side detail */}
         <mesh
           position={[0, coinThickness / 2 + 0.01, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
         >
           <circleGeometry args={[detailSize, 32]} />
           <meshStandardMaterial
@@ -123,7 +129,7 @@ const Coin = () => {
         {/* Tails side detail */}
         <mesh
           position={[0, -coinThickness / 2 - 0.01, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
         >
           <circleGeometry args={[detailSize, 32]} />
           <meshStandardMaterial
@@ -144,17 +150,53 @@ const Coin = () => {
   );
 };
 
-// Camera setup component to ensure proper framing
+// Camera setup component with limited arc movement
 const CameraSetup = () => {
-  const { size } = useThree();
+  const { camera, size } = useThree();
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
+  const timeRef = useRef(0);
 
+  // Camera movement parameters
+  const params = useRef({
+    radius: 10, // Distance from center
+    arcAngle: 15 * (Math.PI / 180), // 15 degrees in radians (30 degrees total movement)
+    speed: 2, // Oscillation speed
+    yOffset: 0.8, // Vertical movement amount
+    basePosition: [0, 0, 10], // Base camera position
+  });
+
+  // Setup initial camera position
   useEffect(() => {
     if (cameraRef.current) {
-      // Adjust camera to frame the coin properly
       cameraRef.current.lookAt(0, 0, 0);
     }
   }, [size]);
+
+  // Limited arc animation
+  useFrame((_, delta) => {
+    // Update time
+    timeRef.current += delta * params.current.speed;
+
+    // Calculate camera position using sine wave for back-and-forth movement
+    // This creates movement within a limited 30 degree arc
+    const angleOffset = Math.sin(timeRef.current) * params.current.arcAngle;
+
+    // Base position is along Z-axis
+    const z = Math.cos(angleOffset) * params.current.radius;
+    const x = Math.sin(angleOffset) * params.current.radius;
+
+    // Add slight vertical movement for visual interest
+    const y = Math.sin(timeRef.current * 0.5) * params.current.yOffset;
+
+    // Apply to both cameras
+    if (cameraRef.current) {
+      cameraRef.current.position.set(x, y, z);
+      cameraRef.current.lookAt(0, 0, 0);
+    }
+
+    camera.position.set(x, y, z);
+    camera.lookAt(0, 0, 0);
+  });
 
   return <perspectiveCamera ref={cameraRef} position={[0, 0, 10]} />;
 };
@@ -163,17 +205,24 @@ export const App = () => {
   return (
     <div className="canvas">
       <Canvas
-        camera={{ position: [0, 0, 10], fov: 45 }}
+        camera={{ position: [0, 0, 10], fov: 70 }}
         dpr={[1, 2]} // Better performance on high-DPI screens
       >
         <CameraSetup />
         <Coin />
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
+        <ambientLight intensity={1.2} />
+        <directionalLight position={[5, 5, 5]} intensity={2} color="#FFFFFF" />
         <directionalLight
           position={[-5, -5, 5]}
-          intensity={0.5}
+          intensity={1}
           color="#FFF9E5"
+        />
+        <spotLight
+          position={[0, 5, 5]}
+          intensity={1}
+          color="#FFFFFF"
+          distance={20}
+          angle={0.6}
         />
       </Canvas>
     </div>
