@@ -142,7 +142,7 @@ const Coin = () => {
 
       {/* Result display */}
       {result && (
-        <Html position={[0, coinSize * 1.5, 0]} center>
+        <Html position={[0, 5, 0]} center>
           <div className="result">{result}</div>
         </Html>
       )}
