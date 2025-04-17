@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Canvas, useFrame, useThree, ThreeEvent } from "@react-three/fiber";
+import { Canvas, ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -52,8 +52,7 @@ const Coin = () => {
     // Rearranged: a = -u²/(2s) where u=initial speed, s=distance
     const initialSpeed = spinSpeedRef.current;
     const targetRotation = targetSpinsRef.current * Math.PI * 2;
-    decelerationRef.current =
-      -(initialSpeed * initialSpeed) / (2 * targetRotation);
+    decelerationRef.current = -(initialSpeed * initialSpeed) / (2 * targetRotation);
   };
 
   // Animation frame update
@@ -75,15 +74,12 @@ const Coin = () => {
 
       // Calculate how many quarter turns we've done (each π/2)
       // We want to end on either π/2 (heads) or 3π/2 (tails) to show flat side
-      const quarterTurns = Math.round(
-        coinRef.current.rotation.x / (Math.PI / 2)
-      );
+      const quarterTurns = Math.round(coinRef.current.rotation.x / (Math.PI / 2));
 
       // Ensure we land on π/2 or 3π/2 (so the flat side faces the camera)
-      const targetRotation =
-        quarterTurns % 4 === 1 || quarterTurns % 4 === 3
-          ? quarterTurns * (Math.PI / 2)
-          : (quarterTurns + 1) * (Math.PI / 2);
+      const targetRotation = quarterTurns % 4 === 1 || quarterTurns % 4 === 3
+        ? quarterTurns * (Math.PI / 2)
+        : (quarterTurns + 1) * (Math.PI / 2);
 
       // Smoothly set final rotation
       coinRef.current.rotation.x = targetRotation;
