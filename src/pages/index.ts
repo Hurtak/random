@@ -1,8 +1,9 @@
 import { type ComponentType } from "react";
 
 import { CoinPage } from "./coin-page.tsx";
+import { DicePage } from "./dice-page.tsx";
 
-export type PageId = "coin";
+export type PageId = "coin" | "dice";
 
 type PageDefinition = {
   description: string;
@@ -16,8 +17,14 @@ export const pages: ReadonlyArray<PageDefinition> = [
     id: "coin",
     label: "Coin",
   },
+  {
+    description: "Physics dice room",
+    id: "dice",
+    label: "Dice",
+  },
 ];
 
 export const pageComponents: Record<PageId, ComponentType> = {
   coin: CoinPage,
+  dice: DicePage,
 };

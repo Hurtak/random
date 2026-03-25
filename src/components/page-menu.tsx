@@ -36,7 +36,7 @@ export const PageMenu = ({ activePage, onClose, onSelectPage }: PageMenuProps) =
         </div>
 
         <p className="menu-description">
-          More pages can slot in here later. For now the coin scene lives as its own page.
+          Pick a scene and drop into it. The coin flip and dice room each run as their own full-screen workspace.
         </p>
 
         <nav aria-label="Available pages" className="menu-pages">

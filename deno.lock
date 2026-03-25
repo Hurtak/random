@@ -1,9 +1,13 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@std/assert@^1.0.19": "1.0.19",
+    "jsr:@std/internal@^1.0.12": "1.0.12",
     "npm:@deno/vite-plugin@^1.0.6": "1.0.6_vite@7.3.1__@types+node@22.12.0__picomatch@4.0.4_@types+node@22.12.0",
+    "npm:@dimforge/rapier3d-compat@*": "0.19.2",
     "npm:@react-three/drei@^10.7.7": "10.7.7_@react-three+fiber@9.5.0__react@19.2.4__react-dom@19.2.4___react@19.2.4__three@0.183.2__@types+react@19.2.14__use-sync-external-store@1.6.0___react@19.2.4_react@19.2.4_react-dom@19.2.4__react@19.2.4_three@0.183.2_@types+react@19.2.14_use-sync-external-store@1.6.0__react@19.2.4",
     "npm:@react-three/fiber@^9.5.0": "9.5.0_react@19.2.4_react-dom@19.2.4__react@19.2.4_three@0.183.2_@types+react@19.2.14_use-sync-external-store@1.6.0__react@19.2.4",
+    "npm:@react-three/rapier@2.2.0": "2.2.0_@react-three+fiber@9.5.0__react@19.2.4__react-dom@19.2.4___react@19.2.4__three@0.183.2__@types+react@19.2.14__use-sync-external-store@1.6.0___react@19.2.4_react@19.2.4_three@0.183.2_react-dom@19.2.4__react@19.2.4_@types+react@19.2.14",
     "npm:@tailwindcss/vite@^4.2.2": "4.2.2_vite@7.3.1__@types+node@22.12.0__picomatch@4.0.4_@types+node@22.12.0",
     "npm:@types/node@*": "22.12.0",
     "npm:@types/react@^19.2.14": "19.2.14",
@@ -15,6 +19,17 @@
     "npm:three@~0.183.2": "0.183.2",
     "npm:vite@*": "7.3.1_@types+node@22.12.0_picomatch@4.0.4",
     "npm:vite@^7.3.1": "7.3.1_@types+node@22.12.0_picomatch@4.0.4"
+  },
+  "jsr": {
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/internal@1.0.12": {
+      "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    }
   },
   "npm": {
     "@babel/code-frame@7.29.0": {
@@ -165,6 +180,9 @@
     },
     "@dimforge/rapier3d-compat@0.12.0": {
       "integrity": "sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow=="
+    },
+    "@dimforge/rapier3d-compat@0.19.2": {
+      "integrity": "sha512-AZHL1jqUF55QJkJyU1yKeh4ImX2J93bVLIezT1+o0FZqTix6O06MOaqpKoJ4MmbDCsoZmwO+qc471/SDMDm2AA=="
     },
     "@esbuild/aix-ppc64@0.27.4": {
       "integrity": "sha512-cQPwL2mp2nSmHHJlCyoXgHGhbEPMrEEU5xhkcy3Hs/O7nGZqEpZ2sUtLaL9MORLtDfRvVl2/3PAuEkYZH0Ty8Q==",
@@ -385,6 +403,17 @@
       ],
       "optionalPeers": [
         "react-dom"
+      ]
+    },
+    "@react-three/rapier@2.2.0_@react-three+fiber@9.5.0__react@19.2.4__react-dom@19.2.4___react@19.2.4__three@0.183.2__@types+react@19.2.14__use-sync-external-store@1.6.0___react@19.2.4_react@19.2.4_three@0.183.2_react-dom@19.2.4__react@19.2.4_@types+react@19.2.14": {
+      "integrity": "sha512-mVsqbKXlGZoN+XrqdhzFZUQmy8pibEOVzl4k7LC+LHe84bQnYBSagy1Hvbda6bL1PJDdTFyiDiBk5buKFinNIQ==",
+      "dependencies": [
+        "@dimforge/rapier3d-compat@0.19.2",
+        "@react-three/fiber",
+        "react",
+        "suspend-react",
+        "three",
+        "three-stdlib"
       ]
     },
     "@rolldown/pluginutils@1.0.0-rc.3": {
@@ -677,7 +706,7 @@
     "@types/three@0.183.1": {
       "integrity": "sha512-f2Pu5Hrepfgavttdye3PsH5RWyY/AvdZQwIVhrc4uNtvF7nOWJacQKcoVJn0S4f0yYbmAE6AR+ve7xDcuYtMGw==",
       "dependencies": [
-        "@dimforge/rapier3d-compat",
+        "@dimforge/rapier3d-compat@0.12.0",
         "@tweenjs/tween.js",
         "@types/stats.js",
         "@types/webxr",
@@ -1319,6 +1348,7 @@
       "npm:@deno/vite-plugin@^1.0.6",
       "npm:@react-three/drei@^10.7.7",
       "npm:@react-three/fiber@^9.5.0",
+      "npm:@react-three/rapier@2.2.0",
       "npm:@tailwindcss/vite@^4.2.2",
       "npm:@types/react@^19.2.14",
       "npm:@vitejs/plugin-react@^5.2.0",
