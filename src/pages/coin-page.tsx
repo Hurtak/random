@@ -35,6 +35,13 @@ type NormalizedReliefShape = {
   area: number;
   shape: THREE.Shape;
 };
+type SvgShapePathWithStyle = THREE.ShapePath & {
+  userData?: {
+    style?: {
+      fill?: string;
+    };
+  };
+};
 
 type ReliefStampProps = {
   color: string;
@@ -124,7 +131,7 @@ const normalizeReliefShapes = (svgText: string, options: ReliefNormalizationOpti
   const parsed = loader.parse(svgText);
   const extractedShapes = parsed.paths
     .filter((path: THREE.ShapePath) => {
-      const fill = path.userData?.style?.fill;
+      const fill = (path as SvgShapePathWithStyle).userData?.style?.fill;
       return typeof fill === "string" && fill !== "none" && !fill.startsWith("url(");
     })
     .flatMap((path: THREE.ShapePath) => SVGLoader.createShapes(path))
