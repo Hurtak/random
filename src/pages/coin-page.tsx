@@ -1,7 +1,7 @@
 import { ContactShadows, Html } from "@react-three/drei";
-import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import * as THREE from "three";
 import eagleSvgText from "../assets/coin-eagle-ref.svg?raw";
 import headSvgText from "../assets/coin-head-ref.svg?raw";
@@ -22,6 +22,7 @@ const RELIEF_MAX_OUTER_POINTS = 220;
 const RELIEF_MAX_HOLE_POINTS = 88;
 type ReliefNormalizationOptions = {
   curveSegments?: number;
+  flipX?: boolean;
   maxHolePoints?: number;
   maxOuterPoints?: number;
   maxShapes?: number;
@@ -61,6 +62,27 @@ type CoinFaceProps = {
   type: "heads" | "tails";
   texture: THREE.CanvasTexture;
 };
+
+type CoinResult = "Heads" | "Tails";
+
+type SpinState = {
+  deceleration: number;
+  duration: number;
+  elapsed: number;
+  initialSpeed: number;
+  isActive: boolean;
+  result: CoinResult | null;
+  startRotation: number;
+  targetRotation: number;
+};
+
+const FULL_TURN = Math.PI * 2;
+const HEADS_LANDING_ROTATION = Math.PI / 2;
+const TAILS_LANDING_ROTATION = (3 * Math.PI) / 2;
+const INITIAL_COIN_ROTATION_X = HEADS_LANDING_ROTATION;
+const SPIN_INITIAL_SPEED = 28;
+const MIN_FULL_SPINS = 3;
+const FULL_SPIN_VARIANCE = 3;
 
 const cleanLoop = (points: THREE.Vector2[]) => {
   const deduped = points.filter((point, index) => {
@@ -122,6 +144,7 @@ const createShapeFromTuples = (points: Array<[number, number]>) => {
 const normalizeReliefShapes = (svgText: string, options: ReliefNormalizationOptions = {}) => {
   const {
     curveSegments = RELIEF_CURVE_SEGMENTS,
+    flipX = false,
     maxHolePoints = RELIEF_MAX_HOLE_POINTS,
     maxOuterPoints = RELIEF_MAX_OUTER_POINTS,
     maxShapes = RELIEF_MAX_SHAPES,
@@ -169,7 +192,7 @@ const normalizeReliefShapes = (svgText: string, options: ReliefNormalizationOpti
   const toNormalizedLoop = (points: THREE.Vector2[]) =>
     points.map((point) =>
       new THREE.Vector2(
-        (point.x - centerX) * scale,
+        (point.x - centerX) * scale * (flipX ? -1 : 1),
         (centerY - point.y) * scale,
       )
     );
@@ -224,6 +247,7 @@ const HEAD_RELIEF_SHAPES = normalizeReliefShapes(headSvgText, {
 });
 const EAGLE_RELIEF_SHAPES = normalizeReliefShapes(eagleSvgText, {
   curveSegments: 14,
+  flipX: true,
   maxHolePoints: 64,
   maxOuterPoints: 240,
   maxShapes: 18,
@@ -536,14 +560,20 @@ const CoinFace = ({ fieldRadius, planeOffset, reliefDepth, texture, type }: Coin
 
 const Coin = () => {
   const coinRef = useRef<THREE.Group>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<CoinResult | null>(null);
   const fieldTexture = useCoinFieldTexture();
-  const { viewport } = useThree();
+  const { gl, viewport } = useThree();
 
-  const spinSpeedRef = useRef(0);
-  const targetSpinsRef = useRef(0);
-  const decelerationRef = useRef(0);
+  const spinStateRef = useRef<SpinState>({
+    deceleration: 0,
+    duration: 0,
+    elapsed: 0,
+    initialSpeed: 0,
+    isActive: false,
+    result: null,
+    startRotation: INITIAL_COIN_ROTATION_X,
+    targetRotation: INITIAL_COIN_ROTATION_X,
+  });
 
   const coinRadius = Math.min(viewport.width, viewport.height) * 0.36;
   const coinThickness = coinRadius * 0.15;
@@ -588,50 +618,72 @@ const Coin = () => {
     };
   });
 
-  const handleClick = (event: ThreeEvent<MouseEvent>) => {
-    event.stopPropagation();
+  const handleSpinStart = useEffectEvent(() => {
+    const currentRotation = coinRef.current?.rotation.x ?? INITIAL_COIN_ROTATION_X;
+    const nextResult: CoinResult = Math.random() > 0.5 ? "Heads" : "Tails";
+    const alignedLandingRotation = nextResult === "Heads" ? HEADS_LANDING_ROTATION : TAILS_LANDING_ROTATION;
+    const normalizedCurrentRotation = THREE.MathUtils.euclideanModulo(currentRotation, FULL_TURN);
+    const alignmentDelta = THREE.MathUtils.euclideanModulo(
+      alignedLandingRotation - normalizedCurrentRotation,
+      FULL_TURN,
+    );
+    const fullSpins = MIN_FULL_SPINS + Math.floor(Math.random() * FULL_SPIN_VARIANCE);
+    const remainingRotation = fullSpins * FULL_TURN + alignmentDelta;
+    const deceleration = -(SPIN_INITIAL_SPEED * SPIN_INITIAL_SPEED) / (2 * remainingRotation);
+    const duration = -SPIN_INITIAL_SPEED / deceleration;
 
-    if (isSpinning) {
-      return;
-    }
+    spinStateRef.current = {
+      deceleration,
+      duration,
+      elapsed: 0,
+      initialSpeed: SPIN_INITIAL_SPEED,
+      isActive: true,
+      result: nextResult,
+      startRotation: currentRotation,
+      targetRotation: currentRotation + remainingRotation,
+    };
 
-    setIsSpinning(true);
     setResult(null);
+  });
 
-    spinSpeedRef.current = 28;
-    targetSpinsRef.current = 3.4 + Math.random() * 2.2;
+  useEffect(() => {
+    const handlePointerDown = () => {
+      handleSpinStart();
+    };
 
-    const targetRotation = targetSpinsRef.current * Math.PI * 2;
-    decelerationRef.current = -(spinSpeedRef.current * spinSpeedRef.current) / (2 * targetRotation);
-  };
+    gl.domElement.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      gl.domElement.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [gl, handleSpinStart]);
 
   useFrame((_, delta) => {
-    if (!isSpinning || !coinRef.current) {
+    if (!coinRef.current || !spinStateRef.current.isActive) {
       return;
     }
 
-    coinRef.current.rotation.x += spinSpeedRef.current * delta;
-    spinSpeedRef.current += decelerationRef.current * delta;
+    const spinState = spinStateRef.current;
+    const nextElapsed = Math.min(spinState.elapsed + delta, spinState.duration);
+    const rotation = spinState.startRotation +
+      spinState.initialSpeed * nextElapsed +
+      0.5 * spinState.deceleration * nextElapsed * nextElapsed;
 
-    if (spinSpeedRef.current > 0) {
+    coinRef.current.rotation.x = rotation;
+    spinState.elapsed = nextElapsed;
+
+    if (nextElapsed < spinState.duration) {
       return;
     }
 
-    spinSpeedRef.current = 0;
-    setIsSpinning(false);
-
-    const quarterTurns = Math.round(coinRef.current.rotation.x / (Math.PI / 2));
-    const normalizedQuarterTurn = THREE.MathUtils.euclideanModulo(quarterTurns, 4);
-    const snappedQuarterTurn = normalizedQuarterTurn % 2 === 1 ? quarterTurns : quarterTurns + 1;
-    const snappedRotation = snappedQuarterTurn * (Math.PI / 2);
-
-    coinRef.current.rotation.x = snappedRotation;
-    setResult(THREE.MathUtils.euclideanModulo(snappedQuarterTurn, 4) === 1 ? "Heads" : "Tails");
+    coinRef.current.rotation.x = spinState.targetRotation;
+    spinState.isActive = false;
+    setResult(spinState.result);
   });
 
   return (
     <group>
-      <group onClick={handleClick} ref={coinRef} rotation={[Math.PI / 2, 0, 0]}>
+      <group ref={coinRef} rotation={[INITIAL_COIN_ROTATION_X, 0, 0]}>
         <mesh castShadow receiveShadow>
           <latheGeometry args={[coinProfile, 160]} />
           <meshPhysicalMaterial

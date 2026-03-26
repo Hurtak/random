@@ -29,6 +29,17 @@ type FaceLayout = {
   up: readonly [number, number, number];
 };
 
+type DiceCameraFraming = {
+  driftX: number;
+  driftY: number;
+  driftZ: number;
+  fov: number;
+  lookAtY: number;
+  orbitSpeed: number;
+  y: number;
+  z: number;
+};
+
 const BASE_GRAVITY = 22;
 const DEFAULT_GRAVITY: GravityVector = [0, -BASE_GRAVITY, 0];
 const DICE_HALF_SIZE = 0.46;
@@ -39,6 +50,45 @@ const BETA_NEUTRAL = 72;
 const GRAVITY_EASING = 0.16;
 const FACE_PANEL_SURFACE = DICE_HALF_SIZE + 0.012;
 const FACE_PANEL_SIZE = 0.77;
+const DESKTOP_CAMERA_FRAMING: DiceCameraFraming = {
+  driftX: 0.36,
+  driftY: 0.18,
+  driftZ: 0.24,
+  fov: 40,
+  lookAtY: 0.85,
+  orbitSpeed: 0.22,
+  y: 4.85,
+  z: 6.15,
+};
+const MOBILE_CAMERA_FRAMING: DiceCameraFraming = {
+  driftX: 0.12,
+  driftY: 0.1,
+  driftZ: 0.12,
+  fov: 52,
+  lookAtY: 1.3,
+  orbitSpeed: 0.17,
+  y: 5.6,
+  z: 9.4,
+};
+
+const getResponsiveCameraFraming = (aspect: number): DiceCameraFraming => {
+  const portraitFactor = THREE.MathUtils.clamp((1.18 - aspect) / 0.72, 0, 1);
+
+  return {
+    driftX: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.driftX, MOBILE_CAMERA_FRAMING.driftX, portraitFactor),
+    driftY: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.driftY, MOBILE_CAMERA_FRAMING.driftY, portraitFactor),
+    driftZ: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.driftZ, MOBILE_CAMERA_FRAMING.driftZ, portraitFactor),
+    fov: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.fov, MOBILE_CAMERA_FRAMING.fov, portraitFactor),
+    lookAtY: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.lookAtY, MOBILE_CAMERA_FRAMING.lookAtY, portraitFactor),
+    orbitSpeed: THREE.MathUtils.lerp(
+      DESKTOP_CAMERA_FRAMING.orbitSpeed,
+      MOBILE_CAMERA_FRAMING.orbitSpeed,
+      portraitFactor,
+    ),
+    y: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.y, MOBILE_CAMERA_FRAMING.y, portraitFactor),
+    z: THREE.MathUtils.lerp(DESKTOP_CAMERA_FRAMING.z, MOBILE_CAMERA_FRAMING.z, portraitFactor),
+  };
+};
 
 const FACE_LAYOUTS: ReadonlyArray<FaceLayout> = [
   {
@@ -326,17 +376,30 @@ const GravityController = ({ gravity }: { gravity: GravityVector }) => {
 
 const CameraRig = () => {
   const { camera } = useThree();
-  const targetPositionRef = useRef(new THREE.Vector3(0, 4.85, 6.15));
+  const targetPositionRef = useRef(new THREE.Vector3(0, DESKTOP_CAMERA_FRAMING.y, DESKTOP_CAMERA_FRAMING.z));
+  const lookAtRef = useRef(new THREE.Vector3(0, DESKTOP_CAMERA_FRAMING.lookAtY, 0));
 
   useFrame((state, delta) => {
-    const time = state.clock.getElapsedTime() * 0.22;
-    const driftX = Math.sin(time) * 0.36;
-    const driftY = 4.85 + Math.sin(time * 1.5) * 0.18;
-    const driftZ = 6.15 + Math.cos(time * 1.2) * 0.24;
+    const framing = getResponsiveCameraFraming(state.size.width / Math.max(state.size.height, 1));
+    const time = state.clock.getElapsedTime() * framing.orbitSpeed;
+    const driftX = Math.sin(time) * framing.driftX;
+    const driftY = framing.y + Math.sin(time * 1.5) * framing.driftY;
+    const driftZ = framing.z + Math.cos(time * 1.2) * framing.driftZ;
 
     targetPositionRef.current.set(driftX, driftY, driftZ);
+    lookAtRef.current.y = THREE.MathUtils.damp(lookAtRef.current.y, framing.lookAtY, 4, delta);
     camera.position.lerp(targetPositionRef.current, 1 - Math.exp(-delta * 2.25));
-    camera.lookAt(0, 0.85, 0);
+
+    if (camera instanceof THREE.PerspectiveCamera) {
+      const nextFov = THREE.MathUtils.damp(camera.fov, framing.fov, 4.8, delta);
+
+      if (Math.abs(nextFov - camera.fov) > 0.01) {
+        camera.fov = nextFov;
+        camera.updateProjectionMatrix();
+      }
+    }
+
+    camera.lookAt(lookAtRef.current);
   });
 
   return null;

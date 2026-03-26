@@ -20,3 +20,11 @@ of the head and eagle; the head and tail need to be slightly step out of the coi
 - Replaced the hand-built relief blobs with SVG-derived shapes, switched the tails side to a clearer perching eagle
   reference, and added a secondary portrait step plus darker profile accents so the heads side reads more like a minted
   bust in-browser.
+
+- Fixed the coin spin to land on an exact aligned face through a target-driven kinematic path instead of spinning freely
+  and snapping after the motion ends.
+- Updated spin input handling so any pointer down on the canvas starts a new flip from the coin's current rotation, which
+  lets rapid re-clicks restart an active flip even while the coin is edge-on.
+- Mirrored the eagle relief at SVG normalization time so the tails artwork is no longer horizontally flipped.
+- Validation: `deno task check` passed, and browser verification on `http://127.0.0.1:4173/` confirmed the tails relief
+  orientation and that a second click during an active flip suppresses the result until the restarted spin completes.
